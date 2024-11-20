@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangman</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+    }
+    canvas {
+      background-color: white;
+      border: 2px solid black;
+    }
+    #word { font-size: 30px; margin-bottom: 20px; }
+    #message { font-size: 20px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Hangman Game</h1>
+  <div id="word"></div>
+  <canvas id="hangmanCanvas" width="200" height="200"></canvas>
+  <div id="message"></div>
+  
+  <script>
+    const canvas = document.getElementById('hangmanCanvas');
+    const ctx = canvas.getContext('2d');
+    const word = 'HELLO';
+    let guessedLetters = [];
+    let incorrectGuesses = 0;
+    let message = '';
+    
+    // Draw the hangman stages
+    function drawHangman() {
+      switch (incorrectGuesses) {
+        case 1:
+          ctx.beginPath();
+          ctx.moveTo(50, 250);
+          ctx.lineTo(150, 250); // Base
+          ctx.stroke();
+          break;
+        case 2:
+          ctx.beginPath();
+          ctx.moveTo(100, 250);
+          ctx.lineTo(100, 50); // Pole
+          ctx.stroke();
+          break;
+        case 3:
+          ctx.beginPath();
+          ctx.moveTo(100, 50);
+          ctx.lineTo(150, 50); // Top crossbar
+          ctx.stroke();
+          break;
+        case 4:
+          ctx.beginPath();
+          ctx.moveTo(150, 50);
+          ctx.lineTo(150, 70); // Rope
+          ctx.stroke();
+          break;
+        case 5:
+          ctx.beginPath();
+          ctx.arc(150, 90, 20, 0, Math.PI * 2); // Head
+          ctx.stroke();
+          break;
+        case 6:
+          ctx.beginPath();
+          ctx.moveTo(150, 110);
+          ctx.lineTo(150, 160); // Body
+          ctx.stroke();
+          break;
+        case 7:
+          ctx.beginPath();
+          ctx.moveTo(150, 120);
+          ctx.lineTo(130, 140); // Left arm
+          ctx.stroke();
+          break;
+        case 8:
+          ctx.beginPath();
+          ctx.moveTo(150, 120);
+          ctx.lineTo(170, 140); // Right arm
+          ctx.stroke();
+          break;
+        case 9:
+          ctx.beginPath();
+          ctx.moveTo(150, 160);
+          ctx.lineTo(130, 180); // Left leg
+          ctx.stroke();
+          break;
+        case 10:
+          ctx.beginPath();
+          ctx.moveTo(150, 160);
+          ctx.lineTo(170, 180); // Right leg
+          ctx.stroke();
+          message = 'Game Over!';
+          showMessage();
+          break;
+      }
+    }
+
+    // Update word display
+    function updateWord() {
+      let displayWord = '';
+      for (let i = 0; i < word.length; i++) {
+        if (guessedLetters.includes(word[i])) {
+          displayWord += word[i] + ' ';
+        } else {
+          displayWord += '_ ';
+        }
+      }
+      document.getElementById('word').innerText = displayWord.trim();
+    }
+
+    // Check if the letter guessed is correct
+    function guessLetter(letter) {
+      if (word.includes(letter) && !guessedLetters.includes(letter)) {
+        guessedLetters.push(letter);
+        if (!word.split('').some(l => !guessedLetters.includes(l))) {
+          message = 'You Win!';
+          showMessage();
+        }
+      } else {
+        incorrectGuesses++;
+        drawHangman();
+      }
+      updateWord();
+    }
+
+    // Display message
+    function showMessage() {
+      document.getElementById('message').innerText = message;
+    }
+
+    // Handle user input for guessing a letter
+    document.addEventListener('keydown', (e) => {
+      const letter = e.key.toUpperCase();
+      if (/^[A-Z]$/.test(letter) && !guessedLetters.includes(letter)) {
+        guessLetter(letter);
+      }
+    });
+
+    // Initialize game
+    updateWord();
+  </script>
+</body>
+</html>

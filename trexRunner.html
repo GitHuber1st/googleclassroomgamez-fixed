@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T-Rex Runner Game</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      flex-direction: column;
+    }
+
+    canvas {
+      border: 2px solid #000;
+    }
+
+    .go-back {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #000;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .go-back:hover {
+      background-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="600" height="200"></canvas>
+
+  <button class="go-back" onclick="window.location.href = 'index.html';">Go Back</button>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const trexWidth = 40;
+    const trexHeight = 40;
+    const groundHeight = 40;
+    
+    let trexX = 50;
+    let trexY = canvas.height - groundHeight - trexHeight;
+    let trexSpeedY = 0;
+    let gravity = 0.8;
+    let isJumping = false;
+    let jumpPower = -15;
+    
+    let obstacles = [];
+    let score = 0;
+
+    // T-Rex speed (slower than obstacles)
+    let trexSpeed = 0.1;
+
+    // Obstacle speed
+    let obstacleSpeed = 6;
+
+    // Handle jumping
+    document.addEventListener('keydown', function(event) {
+      if (event.code === 'Space' && !isJumping) {
+        trexSpeedY = jumpPower;
+        isJumping = true;
+      }
+    });
+
+    // Update game state
+    function update() {
+      // Move the T-Rex
+      trexSpeedY += gravity;
+      trexY += trexSpeedY;
+
+      if (trexY >= canvas.height - groundHeight - trexHeight) {
+        trexY = canvas.height - groundHeight - trexHeight;
+        isJumping = false;
+      }
+
+      // Create obstacles
+      if (Math.random() < 0.02) {
+        let obstacleHeight = Math.random() * 20 + 20;
+        let obstacleX = canvas.width;
+        obstacles.push({ x: obstacleX, y: canvas.height - groundHeight - obstacleHeight, width: 20, height: obstacleHeight });
+      }
+
+      // Move obstacles at obstacleSpeed
+      obstacles.forEach(obstacle => {
+        obstacle.x -= obstacleSpeed;
+      });
+
+      // Remove off-screen obstacles
+      obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
+
+      // Check for collisions
+      obstacles.forEach(obstacle => {
+        if (trexX + trexWidth > obstacle.x && trexX < obstacle.x + obstacle.width &&
+            trexY + trexHeight > obstacle.y) {
+          alert('Game Over!');
+          resetGame();
+        }
+      });
+
+      // Increase score
+      score++;
+    }
+
+    // Draw game elements
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw T-Rex
+      ctx.fillStyle = '#000';
+      ctx.fillRect(trexX, trexY, trexWidth, trexHeight);
+
+      // Draw ground
+      ctx.fillStyle = '#777';
+      ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+
+      // Draw obstacles
+      obstacles.forEach(obstacle => {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      });
+
+      // Draw score
+      ctx.fillStyle = '#000';
+      ctx.font = '16px Arial';
+      ctx.fillText('Score: ' + score, 10, 20);
+    }
+
+    // Reset game to initial state after a game over
+    function resetGame() {
+      trexY = canvas.height - groundHeight - trexHeight;
+      trexSpeedY = 0;
+      obstacles = [];
+      score = 0;
+    }
+
+    // Game loop
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start game loop
+    gameLoop();
+  </script>
+</body>
+</html>

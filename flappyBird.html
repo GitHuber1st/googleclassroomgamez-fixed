@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Flappy Bird - Slow Version</title>
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #70c5ce;
+            font-family: 'Arial', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            background-color: #70c5ce;
+            margin: 0 auto;
+            border: 2px solid #000;
+        }
+
+        /* Game Over Screen */
+        .game-over-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            font-size: 2rem;
+            display: none;
+        }
+
+        .game-over-screen button {
+            padding: 15px;
+            background-color: #ff7f50;
+            color: white;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .game-over-screen button:hover {
+            background-color: #ff6347;
+        }
+
+        /* Go Back Button */
+        .go-back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #ff6347;
+            color: white;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .go-back-button:hover {
+            background-color: #ff7f50;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+    <div class="game-over-screen" id="gameOverScreen">
+        <p>Game Over! Score: <span id="scoreText"></span></p>
+        <button onclick="startGame()">Play Again</button>
+    </div>
+
+    <button class="go-back-button" onclick="goBack()">Go Back</button>
+
+    <script>
+        // Setup Canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Game Variables
+        let bird, pipes, score, isGameOver;
+        let gravity = 0.05;  // Extremely slow gravity for slow fall
+        let jumpPower = -2;  // Even lower jump power for a very subtle jump
+        let pipeGap = 120;  // Smaller gap between pipes
+        let pipeWidth = 60;
+        let pipeSpeed = 1.5;  // Slower pipe speed
+        let groundHeight = 50;  // Height of the ground
+
+        // Bird Constructor
+        function Bird() {
+            this.x = 150;
+            this.y = 150;
+            this.width = 30;
+            this.height = 30;
+            this.velocity = 0;
+
+            this.update = function () {
+                this.velocity += gravity;
+                this.y += this.velocity;
+
+                // Prevent the bird from going off screen
+                if (this.y + this.height > canvas.height - groundHeight) {
+                    this.y = canvas.height - this.height - groundHeight;
+                    this.velocity = 0;
+                    isGameOver = true; // Game over if the bird touches the ground
+                }
+            };
+
+            this.jump = function () {
+                this.velocity = jumpPower;
+            };
+
+            this.draw = function () {
+                ctx.fillStyle = '#ffea00'; // Yellow bird
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            };
+        }
+
+        // Pipe Constructor
+        function Pipe() {
+            this.x = canvas.width;
+            this.y = Math.random() * (canvas.height - pipeGap - groundHeight); // Avoid pipes getting too close to the ground
+            this.width = pipeWidth;
+            this.height = canvas.height;
+
+            this.passed = false;
+
+            this.update = function () {
+                this.x -= pipeSpeed;
+                if (!this.passed && this.x < bird.x) {
+                    score++;
+                    this.passed = true;
+                }
+            };
+
+            this.draw = function () {
+                ctx.fillStyle = '#2ecc71'; // Green pipes
+                // Upper pipe
+                ctx.fillRect(this.x, 0, this.width, this.y);
+                // Lower pipe
+                ctx.fillRect(this.x, this.y + pipeGap, this.width, this.height - (this.y + pipeGap));
+            };
+        }
+
+        // Start Game
+        function startGame() {
+            bird = new Bird();
+            pipes = [];
+            score = 0;
+            isGameOver = false;
+            document.getElementById('gameOverScreen').style.display = 'none';
+            gameLoop();
+        }
+
+        // Go Back Function
+        function goBack() {
+            window.location.href = "index.html"; // Change this to your homepage or menu URL
+        }
+
+        // Game Loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isGameOver) {
+                document.getElementById('scoreText').innerText = score;
+                document.getElementById('gameOverScreen').style.display = 'block';
+                return;
+            }
+
+            bird.update();
+            bird.draw();
+
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
+                pipes.push(new Pipe());
+            }
+
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                pipes[i].update();
+                pipes[i].draw();
+
+                if (pipes[i].x + pipes[i].width < 0) {
+                    pipes.splice(i, 1);
+                }
+
+                if (bird.x + bird.width > pipes[i].x &&
+                    bird.x < pipes[i].x + pipes[i].width &&
+                    (bird.y < pipes[i].y || bird.y + bird.height > pipes[i].y + pipeGap)) {
+                    isGameOver = true;  // Bird collides with pipe
+                }
+            }
+
+            // Draw the ground
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, 10, 30);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event Listeners
+        window.addEventListener('keydown', function (e) {
+            if (e.code === 'Space' && !isGameOver) {
+                bird.jump();
+            }
+        });
+
+        // Start the game
+        startGame();
+    </script>
+
+</body>
+
+</html>

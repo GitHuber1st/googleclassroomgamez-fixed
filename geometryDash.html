@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geometry Dash Clone</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #222;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      background-color: #000;
+      border: 2px solid #fff;
+    }
+
+    #score-board {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    .go-back {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background-color: #000;
+      color: white;
+      font-size: 18px;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .go-back:hover {
+      background-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="score-board">Score: 0</div>
+  <button class="go-back" onclick="window.location.href = 'index.html';">Go Back</button>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Game Settings
+    canvas.width = 800;
+    canvas.height = 600;
+
+    let score = 0;
+    let isGameOver = false;
+    let isJumping = false;
+    let gravity = 0.8;
+    let jumpHeight = -12;
+    let jumpSpeed = 0;
+
+    // Player (Square)
+    let player = {
+      x: 50,
+      y: canvas.height - 50,
+      width: 40,
+      height: 40,
+      color: 'cyan',
+      speed: 2
+    };
+
+    // Obstacles
+    let obstacles = [];
+    let obstacleSpeed = 3;
+    let obstacleFrequency = 90;
+
+    // Handle Jumping
+    document.addEventListener('keydown', function(event) {
+      if (event.code === 'Space' && !isJumping && !isGameOver) {
+        isJumping = true;
+        jumpSpeed = jumpHeight;
+      }
+    });
+
+    // Update Game
+    function update() {
+      if (!isGameOver) {
+        movePlayer();
+        createObstacles();
+        moveObstacles();
+        checkCollisions();
+        updateScore();
+      }
+    }
+
+    // Move Player
+    function movePlayer() {
+      if (isJumping) {
+        jumpSpeed += gravity;
+        player.y += jumpSpeed;
+
+        if (player.y >= canvas.height - player.height) {
+          player.y = canvas.height - player.height;
+          isJumping = false;
+        }
+      }
+    }
+
+    // Create Obstacles
+    function createObstacles() {
+      if (Math.random() < 1 / obstacleFrequency) {
+        let height = Math.random() * (canvas.height - 100) + 30;
+        obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height: height });
+      }
+    }
+
+    // Move Obstacles
+    function moveObstacles() {
+      obstacles.forEach((obstacle, index) => {
+        obstacle.x -= obstacleSpeed;
+        if (obstacle.x + obstacle.width < 0) {
+          obstacles.splice(index, 1);
+        }
+      });
+    }
+
+    // Check for Collisions
+    function checkCollisions() {
+      obstacles.forEach(obstacle => {
+        if (
+          player.x + player.width > obstacle.x &&
+          player.x < obstacle.x + obstacle.width &&
+          player.y + player.height > obstacle.y
+        ) {
+          isGameOver = true;
+          alert('Game Over! Your Score: ' + score);
+          resetGame();
+        }
+      });
+    }
+
+    // Update Score
+    function updateScore() {
+      score++;
+      document.getElementById('score-board').innerText = 'Score: ' + score;
+    }
+
+    // Reset Game
+    function resetGame() {
+      score = 0;
+      obstacles = [];
+      player.y = canvas.height - player.height;
+      isJumping = false;
+      isGameOver = false;
+    }
+
+    // Draw Game
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Player
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Draw Obstacles
+      obstacles.forEach(obstacle => {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      });
+    }
+
+    // Game Loop
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start Game
+    gameLoop();
+  </script>
+</body>
+</html>
